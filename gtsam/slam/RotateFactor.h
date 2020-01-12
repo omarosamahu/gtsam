@@ -112,8 +112,6 @@ public:
     }
     return error;
   }
-
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 }  // namespace gtsam
 

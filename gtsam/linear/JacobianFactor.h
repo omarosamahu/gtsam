@@ -25,8 +25,6 @@
 #include <gtsam/inference/VariableSlots.h>
 
 #include <boost/make_shared.hpp>
-#include <boost/serialization/version.hpp>
-#include <boost/serialization/split_member.hpp>
 
 namespace gtsam {
 
@@ -408,49 +406,19 @@ namespace gtsam {
     /** Serialization function */
     friend class boost::serialization::access;
     template<class ARCHIVE>
-    void save(ARCHIVE & ar, const unsigned int version) const {
-      // TODO(fan): This is a hack for Boost < 1.66
-      // We really need to introduce proper versioning in the archives
-      // As otherwise this will not read objects serialized by older
-      // versions of GTSAM
-      ar << BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
-      ar << BOOST_SERIALIZATION_NVP(Ab_);
-      bool model_null = false;
-      if(model_.get() == nullptr) {
-        model_null = true;
-        ar << boost::serialization::make_nvp("model_null", model_null);
-      } else {
-        ar << boost::serialization::make_nvp("model_null", model_null);
-        ar << BOOST_SERIALIZATION_NVP(model_);
-      }
+    void serialize(ARCHIVE & ar, const unsigned int /*version*/) {
+      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
+      ar & BOOST_SERIALIZATION_NVP(Ab_);
+      ar & BOOST_SERIALIZATION_NVP(model_);
     }
-
-    template<class ARCHIVE>
-    void load(ARCHIVE & ar, const unsigned int version) {
-      // invoke serialization of the base class
-      ar >> BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
-      ar >> BOOST_SERIALIZATION_NVP(Ab_);
-      if (version < 1) {
-        ar >> BOOST_SERIALIZATION_NVP(model_);
-      } else {
-        bool model_null;
-        ar >> BOOST_SERIALIZATION_NVP(model_null);
-        if (!model_null) {
-          ar >> BOOST_SERIALIZATION_NVP(model_);
-        }
-      }
-    }
-
-    BOOST_SERIALIZATION_SPLIT_MEMBER()
   }; // JacobianFactor
+
 /// traits
 template<>
 struct traits<JacobianFactor> : public Testable<JacobianFactor> {
 };
 
 } // \ namespace gtsam
-
-BOOST_CLASS_VERSION(gtsam::JacobianFactor, 1)
 
 #include <gtsam/linear/JacobianFactor-inl.h>
 

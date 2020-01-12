@@ -6,9 +6,8 @@ All Rights Reserved
 See LICENSE for the license information
 
 Pose3 unit tests.
-Author: Frank Dellaert, Duy Nguyen Ta
+Author: Frank Dellaert & Duy Nguyen Ta (Python)
 """
-# pylint: disable=no-name-in-module
 import math
 import unittest
 

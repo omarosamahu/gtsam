@@ -136,13 +136,13 @@ endif()
 target_include_directories(gtsam BEFORE PUBLIC
   # SuiteSparse_config
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/SuiteSparse_config>
-  $<INSTALL_INTERFACE:include/gtsam/3rdparty/SuiteSparse_config>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/gtsam/3rdparty/SuiteSparse_config>
   # CCOLAMD
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/CCOLAMD/Include>
-  $<INSTALL_INTERFACE:include/gtsam/3rdparty/CCOLAMD>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/gtsam/3rdparty/CCOLAMD>
   # main gtsam includes:
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-  $<INSTALL_INTERFACE:include/>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/>
   # config.h
   $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
   # unit tests:
@@ -153,7 +153,7 @@ if(GTSAM_SUPPORT_NESTED_DISSECTION)
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/gtsam/3rdparty/metis/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/gtsam/3rdparty/metis/libmetis>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/gtsam/3rdparty/metis/GKlib>
-    $<INSTALL_INTERFACE:include/gtsam/3rdparty/metis/>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/gtsam/3rdparty/metis/>
   )
 endif()
 
@@ -168,8 +168,14 @@ if(WIN32) # Add 'lib' prefix to static library to avoid filename collision with 
 		set_target_properties(gtsam PROPERTIES
 			PREFIX ""
 			DEFINE_SYMBOL GTSAM_EXPORTS
-			RUNTIME_OUTPUT_DIRECTORY "${GTSAM_BINARY_DIR}/bin")
+    RUNTIME_OUTPUT_DIRECTORY "${GTSAM_BINARY_DIR}/bin")
 	endif()
+endif()
+
+if (APPLE AND BUILD_SHARED_LIBS)
+	set_target_properties(gtsam PROPERTIES
+		INSTALL_NAME_DIR
+		"${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
 install(

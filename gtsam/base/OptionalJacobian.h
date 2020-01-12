@@ -176,11 +176,10 @@ public:
     pointer_(NULL) {
   }
 
-  /// Construct from pointer to dynamic matrix
-  OptionalJacobian(Jacobian* pointer) : pointer_(pointer) {}
-
-  /// Construct from refrence to dynamic matrix
-  OptionalJacobian(Jacobian& dynamic) : pointer_(&dynamic) {}
+  /// Constructor that will resize a dynamic matrix (unless already correct)
+  OptionalJacobian(Eigen::MatrixXd& dynamic) :
+      pointer_(&dynamic) {
+  }
 
 #ifndef OPTIONALJACOBIAN_NOBOOST
 

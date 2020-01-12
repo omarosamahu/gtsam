@@ -89,9 +89,12 @@ public:
 
     /**
      * Create a duplicate object returned as a pointer to the generic Value interface.
+     * For the sake of performance, this function use singleton pool allocator instead of the normal heap allocator.
+     * The result must be deleted with Value::deallocate_, not with the 'delete' operator.
      */
     virtual Value* clone_() const {
-      GenericValue* ptr = new GenericValue(*this); // calls copy constructor to fill in
+      void *place = boost::singleton_pool<PoolTag, sizeof(GenericValue)>::malloc();
+      GenericValue* ptr = new (place) GenericValue(*this); // calls copy constructor to fill in
       return ptr;
     }
 
@@ -99,7 +102,8 @@ public:
      * Destroy and deallocate this object, only if it was originally allocated using clone_().
      */
     virtual void deallocate_() const {
-      delete this;
+      this->~GenericValue(); // Virtual destructor cleans up the derived object
+      boost::singleton_pool<PoolTag, sizeof(GenericValue)>::free((void*) this); // Release memory from pool
     }
 
     /**
@@ -114,7 +118,10 @@ public:
       // Call retract on the derived class using the retract trait function
       const T retractResult = traits<T>::Retract(GenericValue<T>::value(), delta);
 
-      Value* resultAsValue = new GenericValue(retractResult);
+      // Create a Value pointer copy of the result
+      void* resultAsValuePlace =
+          boost::singleton_pool<PoolTag, sizeof(GenericValue)>::malloc();
+      Value* resultAsValue = new (resultAsValuePlace) GenericValue(retractResult);
 
       // Return the pointer to the Value base class
       return resultAsValue;
@@ -164,6 +171,12 @@ public:
       value_ = rhs.value_;
       return *this;
     }
+
+  private:
+
+    /// Fake Tag struct for singleton pool allocator. In fact, it is never used!
+    struct PoolTag {
+    };
 
   private:
 

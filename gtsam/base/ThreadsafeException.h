@@ -22,7 +22,6 @@
 #include <gtsam/config.h> // for GTSAM_USE_TBB
 
 #include <boost/optional/optional.hpp>
-#include <gtsam/dllexport.h>
 #include <string>
 #include <typeinfo>
 
@@ -118,7 +117,7 @@ public:
 };
 
 /// Thread-safe runtime error exception
-class GTSAM_EXPORT RuntimeErrorThreadsafe: public ThreadsafeException<RuntimeErrorThreadsafe> {
+class RuntimeErrorThreadsafe: public ThreadsafeException<RuntimeErrorThreadsafe> {
 public:
   /// Construct with a string describing the exception
   RuntimeErrorThreadsafe(const std::string& description) :

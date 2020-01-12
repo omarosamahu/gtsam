@@ -65,7 +65,7 @@ add_custom_target(uninstall
 if(GTSAM_UNSTABLE_AVAILABLE)
     option(GTSAM_BUILD_UNSTABLE              "Enable/Disable libgtsam_unstable"          ON)
 endif()
-option(BUILD_SHARED_LIBS                 "Build shared gtsam library, instead of static" ON)
+option(BUILD_STATIC_LIBS                 "Build STATIC gtsam library, instead of static" ON)
 option(GTSAM_USE_QUATERNIONS             "Enable/Disable using an internal Quaternion representation for rotations instead of rotation matrices. If enable, Rot3::EXPMAP is enforced by default." OFF)
 option(GTSAM_POSE3_EXPMAP 			 	 "Enable/Disable using Pose3::EXPMAP as the default mode. If disabled, Pose3::FIRST_ORDER will be used." OFF)
 option(GTSAM_ROT3_EXPMAP 			 	 "Ignore if GTSAM_USE_QUATERNIONS is OFF (Rot3::EXPMAP by default). Otherwise, enable Rot3::EXPMAP, or if disabled, use Rot3::CAYLEY." OFF)
@@ -88,7 +88,7 @@ if(NOT MSVC AND NOT XCODE_VERSION)
 
   # Set the GTSAM_BUILD_TAG variable.
   # If build type is Release, set to blank (""), else set to the build type.
-  if(${CMAKE_BUILD_TYPE_UPPER} STREQUAL "RELEASE")
+  if("${CMAKE_BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
    set(GTSAM_BUILD_TAG "") # Don't create release mode tag on installed directory
   else()
    set(GTSAM_BUILD_TAG "${CMAKE_BUILD_TYPE}")
@@ -113,8 +113,8 @@ if(GTSAM_INSTALL_WRAP AND NOT GTSAM_BUILD_WRAP)
 	message(FATAL_ERROR "GTSAM_INSTALL_WRAP is enabled, please also enable GTSAM_BUILD_WRAP")
 endif()
 
-if(GTSAM_INSTALL_MATLAB_TOOLBOX AND NOT BUILD_SHARED_LIBS)
-	message(FATAL_ERROR "GTSAM_INSTALL_MATLAB_TOOLBOX and BUILD_SHARED_LIBS=OFF. The MATLAB wrapper cannot be compiled with a static GTSAM library because mex modules are themselves shared libraries.  If you want a self-contained mex module, enable GTSAM_MEX_BUILD_STATIC_MODULE instead of BUILD_SHARED_LIBS=OFF.")
+if(GTSAM_INSTALL_MATLAB_TOOLBOX AND NOT BUILD_STATIC_LIBS)
+	message(FATAL_ERROR "GTSAM_INSTALL_MATLAB_TOOLBOX and BUILD_STATIC_LIBS=OFF. The MATLAB wrapper cannot be compiled with a static GTSAM library because mex modules are themselves STATIC libraries.  If you want a self-contained mex module, enable GTSAM_MEX_BUILD_STATIC_MODULE instead of BUILD_STATIC_LIBS=OFF.")
 endif()
 
 if(GTSAM_INSTALL_MATLAB_TOOLBOX AND GTSAM_TYPEDEF_POINTS_TO_VECTORS)
@@ -140,7 +140,7 @@ if(MSVC)
 	# By default, boost only builds static libraries on windows
 	set(Boost_USE_STATIC_LIBS ON)  # only find static libs
 	# If we ever reset above on windows and, ...
-	# If we use Boost shared libs, disable auto linking.
+	# If we use Boost STATIC libs, disable auto linking.
 	# Some libraries, at least Boost Program Options, rely on this to export DLL symbols.
 	if(NOT Boost_USE_STATIC_LIBS)
 		list_append_cache(GTSAM_COMPILE_DEFINITIONS_PUBLIC BOOST_ALL_NO_LIB BOOST_ALL_DYN_LINK)
@@ -155,7 +155,7 @@ endif()
 # or explicit instantiation will generate build errors.
 # See: https://bitbucket.org/gtborg/gtsam/issues/417/fail-to-build-on-msvc-2017
 #
-if(MSVC AND BUILD_SHARED_LIBS)
+if(MSVC AND BUILD_STATIC_LIBS)
 	list_append_cache(GTSAM_COMPILE_DEFINITIONS_PUBLIC EIGEN_NO_STATIC_ASSERT)
 endif()
 
@@ -191,6 +191,12 @@ else()
       list(APPEND GTSAM_BOOST_LIBRARIES rt) # When using the header-only boost timer library, need -lrt
       message("WARNING:  GTSAM timing instrumentation will use the older, less accurate, Boost timer library because boost older than 1.48 was found.")
     endif()
+endif()
+
+
+if(NOT (${Boost_VERSION} LESS 105600))
+	message("Ignoring Boost restriction on optional lvalue assignment from rvalues")
+	list_append_cache(GTSAM_COMPILE_DEFINITIONS_PUBLIC BOOST_OPTIONAL_ALLOW_BINDING_TO_RVALUES BOOST_OPTIONAL_CONFIG_ALLOW_BINDING_TO_RVALUES)
 endif()
 
 ###############################################################################
@@ -332,16 +338,11 @@ else()
 endif ()
 
 if (MSVC)
-	if (BUILD_SHARED_LIBS)
-		# mute eigen static assert to avoid errors in shared lib
+	if (BUILD_STATIC_LIBS)
+		# mute eigen static assert to avoid errors in STATIC lib
 		list_append_cache(GTSAM_COMPILE_DEFINITIONS_PUBLIC EIGEN_NO_STATIC_ASSERT)
 	endif()
 	list_append_cache(GTSAM_COMPILE_OPTIONS_PRIVATE "/wd4244") # Disable loss of precision which is thrown all over our Eigen
-endif()
-
-if (APPLE AND BUILD_SHARED_LIBS)
-	# Set the default install directory on macOS
-	set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 endif()
 
 ###############################################################################
@@ -388,7 +389,7 @@ if(MSVC)
 	list_append_cache(GTSAM_COMPILE_OPTIONS_PRIVATE /bigobj) # Allow large object files for template-based code
 endif()
 
-# GCC 4.8+ complains about local typedefs which we use for shared_ptr etc.
+# GCC 4.8+ complains about local typedefs which we use for STATIC_ptr etc.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
     list_append_cache(GTSAM_COMPILE_OPTIONS_PRIVATE -Wno-unused-local-typedefs)
@@ -433,7 +434,7 @@ add_subdirectory(timing)
 # Build gtsam_unstable
 if (GTSAM_BUILD_UNSTABLE)
     add_subdirectory(gtsam_unstable)
-endif()
+endif(GTSAM_BUILD_UNSTABLE)
 
 # Matlab toolbox
 if (GTSAM_INSTALL_MATLAB_TOOLBOX)
@@ -512,7 +513,7 @@ print_config_flag(${GTSAM_BUILD_TIMING_ALWAYS}         "Build timing scripts wit
 if (DOXYGEN_FOUND)
     print_config_flag(${GTSAM_BUILD_DOCS}              "Build Docs                     ")
 endif()
-print_config_flag(${BUILD_SHARED_LIBS}                 "Build shared GTSAM libraries   ")
+print_config_flag(${BUILD_STATIC_LIBS}                 "Build STATIC GTSAM libraries   ")
 print_config_flag(${GTSAM_BUILD_TYPE_POSTFIXES}        "Put build type in library name ")
 if(GTSAM_UNSTABLE_AVAILABLE)
     print_config_flag(${GTSAM_BUILD_UNSTABLE}          "Build libgtsam_unstable        ")

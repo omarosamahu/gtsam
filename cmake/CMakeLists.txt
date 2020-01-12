@@ -20,7 +20,6 @@ install(FILES
   GtsamPythonWrap.cmake
   GtsamCythonWrap.cmake
   GtsamTesting.cmake
-  GtsamPrinting.cmake
   FindCython.cmake
   FindNumPy.cmake
   README.html

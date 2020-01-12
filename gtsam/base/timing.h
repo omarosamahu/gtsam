@@ -196,7 +196,7 @@ namespace gtsam {
     /**
      * Small class that calls internal::tic at construction, and internol::toc when destroyed
      */
-    class GTSAM_EXPORT AutoTicToc {
+    class AutoTicToc {
      private:
       size_t id_;
       const char* label_;
